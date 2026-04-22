@@ -16,4 +16,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  collabyouth_data:
+  collabyouth_data:	
