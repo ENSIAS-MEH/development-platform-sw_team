@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: collabyouth_db
+    environment:
+      POSTGRES_DB: collabyouth
+      POSTGRES_USER: collabyouth_user
+      POSTGRES_PASSWORD: collabyouth_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - collabyouth_data:/var/lib/postgresql/data
+      - ./src/main/resources/db/collabyouth_database_v3.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+volumes:
+  collabyouth_data:
