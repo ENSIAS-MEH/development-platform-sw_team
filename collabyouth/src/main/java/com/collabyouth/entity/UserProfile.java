@@ -13,13 +13,6 @@ import java.util.UUID;
 @Table(name = "user_profiles")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class UserProfile {
-	@ManyToMany
-	@JoinTable(
-	    name = "user_skills",
-	    joinColumns = @JoinColumn(name = "user_profile_id"),
-	    inverseJoinColumns = @JoinColumn(name = "skill_id")
-	)
-	private Set<Skill> skills = new HashSet<>();
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -50,9 +43,16 @@ public class UserProfile {
     @Column(name = "linkedin_url", length = 255)
     private String linkedinUrl;
 
+    @ManyToMany
+    @JoinTable(
+        name = "user_skills",
+        joinColumns = @JoinColumn(name = "user_profile_id"),
+        inverseJoinColumns = @JoinColumn(name = "skill_id")
+    )
+    @Builder.Default
+    private Set<Skill> skills = new HashSet<>();
+
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 }
-
-

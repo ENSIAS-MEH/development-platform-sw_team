@@ -4,6 +4,8 @@ import com.collabyouth.enums.InvitationStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -33,7 +35,9 @@ public class TeamInvitation {
     private String message;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(nullable = false, columnDefinition = "invitation_status")
+    @Builder.Default
     private InvitationStatus status = InvitationStatus.PENDING;
 
     @CreationTimestamp

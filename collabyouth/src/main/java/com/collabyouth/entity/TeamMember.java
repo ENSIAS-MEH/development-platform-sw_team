@@ -4,6 +4,8 @@ import com.collabyouth.enums.TeamRole;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -27,7 +29,9 @@ public class TeamMember {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "team_role", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "team_role", nullable = false, columnDefinition = "team_role")
+    @Builder.Default
     private TeamRole teamRole = TeamRole.MEMBER;
 
     @CreationTimestamp

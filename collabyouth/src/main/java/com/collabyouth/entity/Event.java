@@ -6,7 +6,9 @@ import com.collabyouth.enums.EventType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.HashSet;
@@ -18,11 +20,6 @@ import java.util.UUID;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Event {
 
-	@ElementCollection
-	@CollectionTable(name = "event_tags", joinColumns = @JoinColumn(name = "event_id"))
-	@Column(name = "tag", length = 100)
-	private Set<String> tags = new HashSet<>();
-	
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -38,15 +35,20 @@ public class Event {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "event_type", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "event_type", nullable = false, columnDefinition = "event_type")
     private EventType eventType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "event_status", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "event_status", nullable = false, columnDefinition = "event_status")
+    @Builder.Default
     private EventStatus eventStatus = EventStatus.DRAFT;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "event_format", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "event_format", nullable = false, columnDefinition = "event_format")
+    @Builder.Default
     private EventFormat eventFormat = EventFormat.IN_PERSON;
 
     @Column(length = 255)
@@ -62,13 +64,21 @@ public class Event {
     private Integer maxTeams;
 
     @Column(name = "min_team_size", nullable = false)
+    @Builder.Default
     private Short minTeamSize = 2;
 
     @Column(name = "max_team_size", nullable = false)
+    @Builder.Default
     private Short maxTeamSize = 5;
 
     @Column(length = 200)
     private String prize;
+
+    @ElementCollection
+    @CollectionTable(name = "event_tags", joinColumns = @JoinColumn(name = "event_id"))
+    @Column(name = "tag", length = 100)
+    @Builder.Default
+    private Set<String> tags = new HashSet<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
