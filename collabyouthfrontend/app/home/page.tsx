@@ -19,16 +19,16 @@ export default function HomePage() {
           />
           <div className="flex gap-3">
             <Link
-              href="/login"
+              href="/auth/login"
               className="px-5 py-2 rounded-xl border border-[#1D9E75] text-[#1D9E75] text-sm font-semibold hover:bg-white/50 transition-colors"
             >
-              Connexion
+              Login
             </Link>
             <Link
-              href="/register"
+              href="/auth/register"
               className="px-5 py-2 rounded-xl bg-[#1D9E75] text-white text-sm font-semibold hover:bg-[#0F6E56] transition-colors"
             >
-              S'inscrire
+              Register
             </Link>
           </div>
         </nav>
