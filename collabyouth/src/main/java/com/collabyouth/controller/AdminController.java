@@ -2,6 +2,7 @@ package com.collabyouth.controller;
 
 import com.collabyouth.dto.response.MessageResponse;
 import com.collabyouth.dto.response.OrgSummaryResponse;
+import com.collabyouth.dto.response.UserSummaryResponse;
 import com.collabyouth.service.AdminService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,6 +22,13 @@ public class AdminController {
         this.adminService = adminService;
     }
 
+    // ── Users ────────────────────────────────────────────────────────
+    @GetMapping("/users")
+    public ResponseEntity<List<UserSummaryResponse>> getAllUsers() {
+        return ResponseEntity.ok(adminService.getAllUsers());
+    }
+
+    // ── Organizations ────────────────────────────────────────────────
     @GetMapping("/organizations/pending")
     public ResponseEntity<List<OrgSummaryResponse>> getPendingOrgs() {
         return ResponseEntity.ok(adminService.getPendingOrganizations());
