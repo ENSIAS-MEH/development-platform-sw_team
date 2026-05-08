@@ -65,8 +65,9 @@ export default function RegisterPage() {
           return;
         }
 
+        // ✅ Corrigé : /api/org/auth/register (au lieu de /api/auth/org/register)
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/org/register`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/org/auth/register`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
