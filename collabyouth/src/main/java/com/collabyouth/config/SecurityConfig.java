@@ -1,11 +1,14 @@
 package com.collabyouth.config;
 
 import com.collabyouth.security.JwtFilter;
+
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -15,10 +18,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource; // ✅ import manquant
+
+import java.util.List; // ✅ java.util.List et non com.sun.tools.javac.util.List
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity // ✅ nécessaire pour que @PreAuthorize fonctionne
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
@@ -34,17 +42,11 @@ public class SecurityConfig {
         this.orgDetailsService = orgDetailsService;
     }
 
-    // ----------------------------------------------------------------
-    // Password encoder — BCrypt for both users and organizations
-    // ----------------------------------------------------------------
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // ----------------------------------------------------------------
-    // Auth providers — one per principal type
-    // ----------------------------------------------------------------
     @Bean
     public DaoAuthenticationProvider userAuthProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -61,26 +63,19 @@ public class SecurityConfig {
         return provider;
     }
 
-    // ----------------------------------------------------------------
-    // Authentication manager — used in AuthService to verify credentials
-    // ----------------------------------------------------------------
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    // ----------------------------------------------------------------
-    // Security filter chain — defines public vs protected routes
-    // ----------------------------------------------------------------
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ✅ CORS branché ici
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-
-                // Public routes — no token needed
                 .requestMatchers(
                     "/api/auth/**",
                     "/api/org/auth/**",
@@ -88,14 +83,8 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/swagger-ui.html"
                 ).permitAll()
-
-                // Admin only
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                // Organization only
                 .requestMatchers("/api/org/**").hasRole("ORG")
-
-                // Everything else requires a valid token
                 .anyRequest().authenticated()
             )
             .authenticationProvider(userAuthProvider())
@@ -103,5 +92,23 @@ public class SecurityConfig {
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    // ✅ @Bean ajouté + imports corrigés
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:3002"
+        ));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }
