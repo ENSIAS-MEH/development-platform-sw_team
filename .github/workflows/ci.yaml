@@ -30,7 +30,7 @@ jobs:
       # Step 3: Build the project and run all JUnit tests except the Spring context test
       # CollabyouthApplicationTests is excluded because it requires a live DB connection
       - name: Build with Maven and run tests
-        run: mvn clean package -Dtest="!CollabyouthApplicationTests" -DfailIfNoTests=false
+        run: mvn clean package -Dtest="!CollabyouthApplicationTests" -Dsurefire.failIfNoSpecifiedTests=false
         working-directory: collabyouth_backend
 
       # Step 4: Publish JUnit test results inline on PRs
