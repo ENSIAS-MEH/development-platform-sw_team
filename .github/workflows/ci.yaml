@@ -221,7 +221,9 @@ jobs:
         run: |
           kubectl rollout status deployment/backend-deployment --timeout=120s
           kubectl rollout status deployment/frontend-deployment --timeout=120s
-
-      # Step 6: Afficher l'URL d'accès
+      # Step 6: Afficher l'URL d'accès sans bloquer le pipeline
       - name: Show app URL
-        run: minikube service frontend-service --url
+        run: |
+          $ip = minikube ip
+          Write-Host "Frontend URL: http://${ip}:30000"
+          Write-Host "Backend URL:  http://${ip}:30081"
