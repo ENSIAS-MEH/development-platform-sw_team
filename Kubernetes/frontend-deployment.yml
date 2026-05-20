@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: DOCKER_USERNAME/collabyouth-frontend:latest
+          image: wafaebar/collabyouth-frontend:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
