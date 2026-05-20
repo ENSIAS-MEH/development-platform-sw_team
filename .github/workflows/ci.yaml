@@ -190,7 +190,7 @@ jobs:
   # ─────────────────────────────────────────────────────────────────
   deploy:
     name: Deploy to Minikube
-    runs-on: [self-hosted, wafae-pc]
+    runs-on: [self-hosted, wafae-PC]
     needs: [docker-backend, docker-frontend]
     if: github.ref == 'refs/heads/main'
 
