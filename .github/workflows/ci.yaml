@@ -193,29 +193,35 @@ jobs:
     runs-on: [self-hosted, wafae]
     needs: [docker-backend, docker-frontend]
     if: github.ref == 'refs/heads/main'
+    env:
+      KUBECONFIG: C:\actions-runner\.kube\config   # ✅ pointe vers le bon kubeconfig
 
     steps:
       # Step 1: Télécharger le code pour avoir les fichiers Kubernetes/
       - name: Checkout code
         uses: actions/checkout@v4.2.2
 
-      # Step 2: Appliquer les fichiers Kubernetes
-      # kubectl apply met à jour les deployments existants ou les crée
-      - name: Deploy to Minikube
-        run: kubectl apply -f Kubernetes/
+      # Step 2: S'assurer que Minikube tourne
+      - name: Start Minikube if not running
+        run: minikube start --driver=docker
 
-      # Step 3: Forcer le redémarrage pour récupérer la nouvelle image :latest
+      # Step 3: Appliquer les fichiers Kubernetes
+      # --validate=false évite l'erreur de connexion OpenAPI
+      - name: Deploy to Minikube
+        run: kubectl apply --validate=false -f Kubernetes/
+
+      # Step 4: Forcer le redémarrage pour récupérer la nouvelle image :latest
       - name: Restart deployments to pull latest images
         run: |
           kubectl rollout restart deployment/backend-deployment
           kubectl rollout restart deployment/frontend-deployment
 
-      # Step 4: Attendre que les pods soient prêts
+      # Step 5: Attendre que les pods soient prêts
       - name: Wait for deployments to be ready
         run: |
           kubectl rollout status deployment/backend-deployment --timeout=120s
           kubectl rollout status deployment/frontend-deployment --timeout=120s
 
-      # Step 5: Afficher l'URL d'accès
+      # Step 6: Afficher l'URL d'accès
       - name: Show app URL
         run: minikube service frontend-service --url
