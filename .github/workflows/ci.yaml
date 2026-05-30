@@ -21,7 +21,7 @@ jobs:
     steps:
       # Step 1: Download the code from GitHub
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
 
       # Step 2: Install Java 21
       - name: Set up JDK 21
@@ -66,7 +66,7 @@ jobs:
     steps:
       # Step 1: Download the code from GitHub
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
 
       # Step 2: Install Node.js 20 (matches the version in the frontend Dockerfile)
       - name: Set up Node.js 20
@@ -110,7 +110,7 @@ jobs:
     steps:
       # Step 1: Download the code
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
 
       # Step 2: Download the tested JAR instead of rebuilding from scratch
       - name: Download JAR artifact
@@ -157,7 +157,7 @@ jobs:
     steps:
       # Step 1: Download the code
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
 
       # Step 2: Log in to Docker Hub using an access token (not your password)
       - name: Log in to Docker Hub
@@ -199,7 +199,7 @@ jobs:
     steps:
       # Step 1: Télécharger le code pour avoir les fichiers Kubernetes/
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
 
       # Step 2: S'assurer que Minikube tourne
       - name: Start Minikube if not running
