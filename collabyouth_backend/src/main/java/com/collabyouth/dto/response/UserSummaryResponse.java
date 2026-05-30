@@ -1,12 +1,20 @@
 package com.collabyouth.dto.response;
 
+import lombok.Builder;
+import lombok.Getter;
+
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
-public record UserSummaryResponse(
-        UUID id,
-        String firstName,
-        String lastName,
-        String email,
-        String role,
-        String status
-) {}
+@Getter
+@Builder
+public class UserSummaryResponse {
+
+    private UUID id;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String role;
+    private String status;
+    private OffsetDateTime createdAt;
+}

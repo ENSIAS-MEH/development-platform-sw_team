@@ -127,19 +127,22 @@ public class AdminService {
         emailService.sendHtmlEmail(org.getEmail(), "Update regarding your CollabYouth application", html);
         return new MessageResponse("Organization rejected");
     }
+    
+    
 
     // ----------------------------------------------------------------
     // Mappers
     // ----------------------------------------------------------------
     private UserSummaryResponse toUserSummary(User user) {
-        return new UserSummaryResponse(
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail(),
-                user.getRole().name(),
-                user.getStatus().name()
-        );
+        return UserSummaryResponse.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .status(user.getStatus().name())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 
     private OrgSummaryResponse toOrgSummary(Organization org) {
