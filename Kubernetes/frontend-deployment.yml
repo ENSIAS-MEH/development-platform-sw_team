@@ -21,6 +21,6 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
-          env:
-            - name: NEXT_PUBLIC_API_URL
-              value: "http://backend-service:8081"
+          # env:
+          #   - name: NEXT_PUBLIC_API_URL
+          #     value: "http://backend-service:8081"
