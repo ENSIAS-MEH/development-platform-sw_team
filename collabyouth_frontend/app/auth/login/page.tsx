@@ -25,7 +25,8 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const res = await fetch(
+      // 1️⃣ Essaie d'abord la route USER (student/admin)
+      const userRes = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
         {
           method: "POST",
@@ -34,25 +35,46 @@ export default function LoginPage() {
         }
       );
 
-      const data = await res.json();
+      if (userRes.ok) {
+        const data = await userRes.json();
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
 
-      if (!res.ok) {
-        throw new Error(data.message || "Identifiants incorrects");
+        switch (data.role) {
+          case "ROLE_ADMIN":
+            router.push("/admin/home");
+            break;
+          default:
+            router.push("/student/home");
+        }
+        return;
       }
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.role);
+      // 2️⃣ Si échec, essaie la route ORG
+      const orgRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/org/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
-      switch (data.role) {
-        case "ROLE_ADMIN":
-          router.push("/admin/home");
-          break;
-        case "ROLE_ORG":
-          router.push("/organizer/home");
-          break;
-        default:
-          router.push("/student/home");
+      const orgText = await orgRes.text();
+      const orgData = orgText ? JSON.parse(orgText) : {};
+
+      if (orgRes.ok) {
+        localStorage.setItem("token", orgData.token);
+        localStorage.setItem("role", orgData.role);
+        router.push("/organizer/home");
+        return;
       }
+
+      // 3️⃣ Les deux ont échoué
+      const userText = await userRes.text();
+      const userData = userText ? JSON.parse(userText) : {};
+      throw new Error(userData.message || orgData.message || "Identifiants incorrects");
+
     } catch (err: any) {
       setError(err.message || "Erreur de connexion");
     } finally {
@@ -175,7 +197,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-5">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <Link href="/auth/register" className="text-[#1D9E75] font-semibold hover:underline">
             Register
           </Link>
