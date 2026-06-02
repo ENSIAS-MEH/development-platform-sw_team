@@ -17,7 +17,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "events")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter 
+@Setter 
+@NoArgsConstructor 
+@AllArgsConstructor 
+@Builder
 public class Event {
 
     @Id
@@ -71,13 +75,19 @@ public class Event {
     @Builder.Default
     private Short maxTeamSize = 5;
 
-    @Column(length = 200)
-    private String prize;
+    @Column(name = "prize_first")
+    private String prizeFirst;
+
+    @Column(name = "prize_second")
+    private String prizeSecond;
+
+    @Column(name = "prize_third")
+    private String prizeThird;
 
     @ElementCollection
     @CollectionTable(name = "event_tags", joinColumns = @JoinColumn(name = "event_id"))
     @Column(name = "tag", length = 100)
-    @Builder.Default
+    @Builder.Default // ← Crucial pour éviter que tags soit 'null' quand tu passes par le Builder
     private Set<String> tags = new HashSet<>();
 
     @CreationTimestamp
