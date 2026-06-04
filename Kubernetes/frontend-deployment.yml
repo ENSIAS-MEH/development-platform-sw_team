@@ -21,6 +21,10 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
-          # env:
-          #   - name: NEXT_PUBLIC_API_URL
-          #     value: "http://backend-service:8081"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
