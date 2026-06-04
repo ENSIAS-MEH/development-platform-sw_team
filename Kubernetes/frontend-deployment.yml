@@ -1,12 +1,12 @@
+# lance image frontend
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend-deployment
-  namespace: collabyouth-prod
   labels:
     app: frontend
 spec:
-  replicas: 2  # ✅ 2 au lieu de 1
+  replicas: 1
   selector:
     matchLabels:
       app: frontend
@@ -17,39 +17,10 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: wafaebar/collabyouth-frontend:latest
+          image: soumiaaa/collabyouth-frontend:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
-          
-          # ✅ Configuration depuis ConfigMap (décommentée!)
-          env:
-            - name: NEXT_PUBLIC_API_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: wallet-config
-                  key: NEXT_PUBLIC_API_URL
-          
-          # ✅ Ressources
-          resources:
-            requests:
-              memory: "128Mi"
-              cpu: "100m"
-            limits:
-              memory: "256Mi"
-              cpu: "200m"
-          
-          # ✅ Health checks
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 3000
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 3000
-            initialDelaySeconds: 5
-            periodSeconds: 5
+          # env:
+          #   - name: NEXT_PUBLIC_API_URL
+          #     value: "http://backend-service:8081"
