@@ -75,13 +75,13 @@ public class Event {
     @Builder.Default
     private Short maxTeamSize = 5;
 
-    @Column(name = "prize_first")
+    @Column(name = "prize_first", nullable = true, columnDefinition = "varchar")
     private String prizeFirst;
 
-    @Column(name = "prize_second")
+    @Column(name = "prize_second", nullable = true, columnDefinition = "varchar")
     private String prizeSecond;
 
-    @Column(name = "prize_third")
+    @Column(name = "prize_third", nullable = true, columnDefinition = "varchar")
     private String prizeThird;
 
     @ElementCollection

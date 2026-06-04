@@ -37,4 +37,5 @@ public class TeamMember {
     @CreationTimestamp
     @Column(name = "joined_at", nullable = false, updatable = false)
     private OffsetDateTime joinedAt;
+    
 }

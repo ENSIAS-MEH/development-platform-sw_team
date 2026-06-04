@@ -1,14 +1,14 @@
-# expose le frontend sur 3000
 apiVersion: v1
 kind: Service
 metadata:
   name: frontend-service
+  namespace: collabyouth-prod
 spec:
   selector:
     app: frontend
-  type: NodePort
+  type: ClusterIP  # ✅ CHANGÉ
   ports:
     - protocol: TCP
       port: 3000
       targetPort: 3000
-      nodePort: 30000
+      # ❌ nodePort: SUPPRIMÉ

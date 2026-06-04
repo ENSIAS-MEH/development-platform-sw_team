@@ -1,3 +1,4 @@
+// 
 package com.collabyouth.repository;
 
 import com.collabyouth.entity.Team;
@@ -12,13 +13,6 @@ import java.util.UUID;
 @Repository
 public interface TeamRepository extends JpaRepository<Team, UUID> {
 
-    List<Team> findAllByCreatedById(UUID userId);
-
-    // Teams the user belongs to (as member or admin)
-    @Query("""
-            SELECT t FROM Team t
-            JOIN TeamMember tm ON tm.team.id = t.id
-            WHERE tm.user.id = :userId
-            """)
-    List<Team> findAllByMemberId(@Param("userId") UUID userId);
+    @Query("SELECT tm.team FROM TeamMember tm WHERE tm.user.id = :studentId")
+    List<Team> findTeamsByStudentId(@Param("studentId") UUID studentId);
 }

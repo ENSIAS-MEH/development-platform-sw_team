@@ -4,20 +4,19 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const NAV = [
-  { href: "/student/home",           label: "Dashboard",      icon: "⊞" },
-  { href: "/student/profile",   label: "My Profile",     icon: "◎" },
-  { href: "/student/partners",  label: "Find Partners",  icon: "⊕" },
-  { href: "/student/events",    label: "Events",         icon: "📅" },
-  { href: "/student/invitations", label: "Invitations",  icon: "✉" },
+  { href: "/student/home",        label: "Dashboard",     icon: "⊞" },
+  { href: "/student/profile",     label: "My Profile",    icon: "◎" },
+  { href: "/student/partners",    label: "Find Partners", icon: "⊕" },
+  { href: "/student/events",      label: "Events",        icon: "📅" },
+  { href: "/student/teams",       label: "My Teams",      icon: "👥" },
+  { href: "/student/invitations", label: "Invitations",   icon: "✉" },
 ];
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    // ← bg-white on the entire shell, no dark bg anywhere
     <div className="flex h-screen bg-white overflow-hidden">
-
       {/* Sidebar */}
       <aside className="w-56 shrink-0 border-r border-gray-200 bg-white flex flex-col">
         {/* Logo */}
@@ -46,7 +45,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           })}
         </nav>
 
-        {/* Bottom: profile quick-link */}
+        {/* Bottom Profile Link */}
         <div className="px-3 pb-4">
           <Link
             href="/student/profile"
@@ -64,7 +63,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         </div>
       </aside>
 
-      {/* Page content — bg-gray-50 gives the subtle off-white inner bg cards sit on */}
+      {/* Main Content View */}
       <main className="flex-1 flex flex-col min-w-0 bg-gray-50">
         {children}
       </main>

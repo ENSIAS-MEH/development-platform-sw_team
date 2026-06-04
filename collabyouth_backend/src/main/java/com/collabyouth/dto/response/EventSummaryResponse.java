@@ -11,6 +11,7 @@ import java.util.UUID;
 public record EventSummaryResponse(
         UUID id,
         String title,
+        String description,
         EventType eventType,
         EventStatus eventStatus,
         EventFormat eventFormat,

@@ -1,12 +1,12 @@
-# lance  image backend
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend-deployment
+  namespace: collabyouth-prod
   labels:
     app: backend
 spec:
-  replicas: 1
+  replicas: 3  # ✅ 3 au lieu de 1
   selector:
     matchLabels:
       app: backend
@@ -21,6 +21,8 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 8081
+          
+          # ✅ Variables depuis ConfigMap ET Secret
           env:
             - name: DB_URL
               valueFrom:
@@ -52,3 +54,32 @@ spec:
                 secretKeyRef:
                   name: backend-secret
                   key: MAIL_PASSWORD
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: wallet-config
+                  key: LOG_LEVEL
+          
+          # ✅ Gestion des ressources
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          
+          # ✅ Health checks
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 5

@@ -1,6 +1,8 @@
 package com.collabyouth.controller;
 
 import com.collabyouth.dto.request.CreateEventRequest;
+import com.collabyouth.dto.request.UpdateEventRequest; // NOUVEAU
+import com.collabyouth.dto.response.EventParticipantTeamResponse; // NOUVEAU
 import com.collabyouth.dto.response.EventSummaryResponse;
 import com.collabyouth.dto.response.OrgDashboardStats;
 import com.collabyouth.security.JwtUtil;
@@ -30,6 +32,10 @@ public class OrgEventController {
 
     private UUID extractOrgId(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
+        // Une petite sécurité au cas où le header est mal formé
+        if (header == null || !header.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Token JWT manquant ou invalide");
+        }
         String token = header.substring(7);
         return jwtUtil.extractId(token);
     }
@@ -54,5 +60,50 @@ public class OrgEventController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(orgEventService.createEvent(orgId, request));
+    }
+
+    // ----------------------------------------------------------------
+    // NOUVEAU : Modifier un événement
+    // URL : PUT /api/org/events/{eventId}
+    // ----------------------------------------------------------------
+    @PutMapping("/events/{eventId}")
+    public ResponseEntity<EventSummaryResponse> updateEvent(
+            @PathVariable UUID eventId,
+            @Valid @RequestBody UpdateEventRequest request,
+            HttpServletRequest httpRequest) {
+        UUID orgId = extractOrgId(httpRequest);
+        return ResponseEntity.ok(orgEventService.updateEvent(orgId, eventId, request));
+    }
+
+    // ----------------------------------------------------------------
+    // NOUVEAU : Voir les participants (équipes) d'un événement
+    // URL : GET /api/org/events/{eventId}/participants
+    // ----------------------------------------------------------------
+    @GetMapping("/events/{eventId}/participants")
+    public ResponseEntity<List<EventParticipantTeamResponse>> getEventParticipants(
+            @PathVariable UUID eventId,
+            HttpServletRequest httpRequest) {
+        UUID orgId = extractOrgId(httpRequest);
+        return ResponseEntity.ok(orgEventService.getEventParticipants(orgId, eventId));
+    }
+
+    // ----------------------------------------------------------------
+    // NOUVEAU : Clôturer un événement
+    // URL : POST /api/org/events/{eventId}/close
+    // ----------------------------------------------------------------
+    @PostMapping("/events/{eventId}/close")
+    public ResponseEntity<EventSummaryResponse> closeEvent(
+            @PathVariable UUID eventId,
+            HttpServletRequest httpRequest) {
+        UUID orgId =
+         extractOrgId(httpRequest);
+        return ResponseEntity.ok(orgEventService.closeEvent(orgId, eventId));
+    }
+    @GetMapping("/events/{eventId}")
+    public ResponseEntity<EventSummaryResponse> getEventDetails(
+            @PathVariable UUID eventId,
+            HttpServletRequest httpRequest) {
+        UUID orgId = extractOrgId(httpRequest);
+        return ResponseEntity.ok(orgEventService.getEventDetails(orgId, eventId));
     }
 }

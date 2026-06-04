@@ -1,14 +1,14 @@
-# expose le backend sur 8081
 apiVersion: v1
 kind: Service
 metadata:
   name: backend-service
+  namespace: collabyouth-prod
 spec:
   selector:
     app: backend
-  type: NodePort
+  type: ClusterIP  # ✅ CHANGÉ
   ports:
     - protocol: TCP
       port: 8081
       targetPort: 8081
-      nodePort: 30081
+      # ❌ nodePort: SUPPRIMÉ

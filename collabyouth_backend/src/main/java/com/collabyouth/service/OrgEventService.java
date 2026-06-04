@@ -1,6 +1,8 @@
 package com.collabyouth.service;
 
 import com.collabyouth.dto.request.CreateEventRequest;
+import com.collabyouth.dto.request.UpdateEventRequest;
+import com.collabyouth.dto.response.EventParticipantTeamResponse;
 import com.collabyouth.dto.response.EventSummaryResponse;
 import com.collabyouth.dto.response.OrgDashboardStats;
 import com.collabyouth.entity.Event;
@@ -10,8 +12,10 @@ import com.collabyouth.repository.EventRepository;
 import com.collabyouth.repository.EventTeamRepository;
 import com.collabyouth.repository.OrganizationRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -29,9 +33,6 @@ public class OrgEventService {
         this.organizationRepository = organizationRepository;
     }
 
-    // ----------------------------------------------------------------
-    // Liste des events de l'org
-    // ----------------------------------------------------------------
     public List<EventSummaryResponse> getOrgEvents(UUID orgId) {
         return eventRepository.findAllByOrganizationId(orgId)
                 .stream()
@@ -39,14 +40,10 @@ public class OrgEventService {
                 .toList();
     }
 
-    // ----------------------------------------------------------------
-    // Stats dashboard
-    // ----------------------------------------------------------------
     public OrgDashboardStats getOrgStats(UUID orgId) {
         List<Event> events = eventRepository.findAllByOrganizationId(orgId);
 
         long totalEvents = events.size();
-
         long activeEvents = events.stream()
                 .filter(e -> EventStatus.PUBLISHED.equals(e.getEventStatus()))
                 .count();
@@ -64,23 +61,13 @@ public class OrgEventService {
                 .average()
                 .orElse(0.0);
 
-        return new OrgDashboardStats(
-                totalEvents,
-                activeEvents,
-                totalTeams,
-                Math.round(avgFillRate * 10.0) / 10.0
-        );
+        return new OrgDashboardStats(totalEvents, activeEvents, totalTeams, Math.round(avgFillRate * 10.0) / 10.0);
     }
 
-    // ----------------------------------------------------------------
-    // Créer un événement
-    // ----------------------------------------------------------------
     public EventSummaryResponse createEvent(UUID orgId, CreateEventRequest request) {
-
         if (request.endsAt().isBefore(request.startsAt())) {
             throw new IllegalArgumentException("La date de fin doit être après la date de début");
         }
-
         if (request.maxTeamSize() < request.minTeamSize()) {
             throw new IllegalArgumentException("La taille max doit être >= à la taille min");
         }
@@ -94,7 +81,7 @@ public class OrgEventService {
                 .description(request.description())
                 .eventType(request.eventType())
                 .eventFormat(request.eventFormat())
-                .eventStatus(EventStatus.DRAFT) // IMPORTANT: pas publié direct
+                .eventStatus(EventStatus.PUBLISHED)
                 .location(request.location())
                 .startsAt(request.startsAt())
                 .endsAt(request.endsAt())
@@ -104,21 +91,98 @@ public class OrgEventService {
                 .prizeFirst(request.prizeFirst())
                 .prizeSecond(request.prizeSecond())
                 .prizeThird(request.prizeThird())
-                .tags(request.tags())
+                .tags(request.tags() != null ? request.tags() : Set.of())
                 .build();
 
         Event saved = eventRepository.save(event);
-
         return toSummary(saved, 0L);
     }
 
-    // ----------------------------------------------------------------
-    // Mapper
-    // ----------------------------------------------------------------
+    @Transactional
+    public EventSummaryResponse updateEvent(UUID orgId, UUID eventId, UpdateEventRequest request) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Événement introuvable"));
+
+        if (!event.getOrganization().getId().equals(orgId)) {
+            throw new IllegalStateException("Vous n'êtes pas autorisé à modifier cet événement");
+        }
+
+        if (request.endsAt().isBefore(request.startsAt())) {
+            throw new IllegalArgumentException("La date de fin doit être après la date de début");
+        }
+
+        event.setTitle(request.title());
+        event.setDescription(request.description());
+        event.setEventType(request.eventType());
+        event.setEventFormat(request.eventFormat());
+        event.setLocation(request.location());
+        event.setStartsAt(request.startsAt());
+        event.setEndsAt(request.endsAt());
+        event.setMaxTeams(request.maxTeams());
+        event.setMinTeamSize(request.minTeamSize());
+        event.setMaxTeamSize(request.maxTeamSize());
+        event.setPrizeFirst(request.prizeFirst());
+        event.setPrizeSecond(request.prizeSecond());
+        event.setPrizeThird(request.prizeThird());
+        event.setTags(request.tags() != null ? request.tags() : Set.of());
+
+        Event updated = eventRepository.save(event);
+        long countTeams = eventTeamRepository.countByEventId(updated.getId());
+        return toSummary(updated, countTeams);
+    }
+
+    public List<EventParticipantTeamResponse> getEventParticipants(UUID orgId, UUID eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Événement introuvable"));
+
+        if (!event.getOrganization().getId().equals(orgId)) {
+            throw new IllegalStateException("Accès refusé à la liste des participants");
+        }
+
+        return eventTeamRepository.findAllByEventId(eventId).stream()
+                .map(et -> new EventParticipantTeamResponse(
+                        et.getTeam().getId(),
+                        et.getTeam().getName(),
+                        et.getTeam().getDescription(),
+                        et.getTeam().getCreatedBy().getId(),
+                        et.getRegisteredAt()
+                ))
+                .toList();
+    }
+
+    @Transactional
+    public EventSummaryResponse closeEvent(UUID orgId, UUID eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Événement introuvable"));
+
+        if (!event.getOrganization().getId().equals(orgId)) {
+            throw new IllegalStateException("Vous n'êtes pas autorisé à clôturer cet événement");
+        }
+
+        event.setEventStatus(EventStatus.CLOSED); 
+
+        Event saved = eventRepository.save(event);
+        long countTeams = eventTeamRepository.countByEventId(saved.getId());
+        return toSummary(saved, countTeams);
+    }
+
+    public EventSummaryResponse getEventDetails(UUID orgId, UUID eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Événement introuvable"));
+
+        if (!event.getOrganization().getId().equals(orgId)) {
+            throw new IllegalStateException("Vous n'avez pas accès à cet événement");
+        }
+
+        long countTeams = eventTeamRepository.countByEventId(event.getId());
+        return toSummary(event, countTeams);
+    }
+
     private EventSummaryResponse toSummary(Event e, long registeredTeams) {
         return new EventSummaryResponse(
                 e.getId(),
                 e.getTitle(),
+                e.getDescription(),
                 e.getEventType(),
                 e.getEventStatus(),
                 e.getEventFormat(),
@@ -128,9 +192,9 @@ public class OrgEventService {
                 e.getMaxTeams(),
                 e.getMinTeamSize(),
                 e.getMaxTeamSize(),
-                e.getPrizeFirst(),
-                e.getPrizeSecond(),
-                e.getPrizeThird(),
+                e.getPrizeFirst() != null ? e.getPrizeFirst().trim() : "",
+                e.getPrizeSecond() != null ? e.getPrizeSecond().trim() : "",
+                e.getPrizeThird() != null ? e.getPrizeThird().trim() : "",
                 e.getTags(),
                 registeredTeams
         );

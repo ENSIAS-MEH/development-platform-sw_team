@@ -1,0 +1,19 @@
+# ═══════════════════════════════════════════════════════
+# EXTERNAL SERVICES - Supabase PostgreSQL
+# ═══════════════════════════════════════════════════════
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: supabase-postgres
+  namespace: collabyouth-prod
+  labels:
+    app: supabase
+    service: postgres
+spec:
+  type: ExternalName
+  externalName: aws-0-eu-west-1.pooler.supabase.com  # ✅ VOTRE HOSTNAME
+  ports:
+  - name: postgres
+    port: 5432
+    protocol: TCP

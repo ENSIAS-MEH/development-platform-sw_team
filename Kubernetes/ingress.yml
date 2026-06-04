@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: collabyouth-ingress
+  namespace: collabyouth-prod
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  
+  rules:
+  # ===== FRONTEND =====
+  - host: collabyouth.local    # Pour Minikube local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 3000
+  
+  # ===== BACKEND API =====
+  - host: api.collabyouth.local    # Pour Minikube local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 8081
+  
+  # ===== HTTPS/SSL (optionnel pour Minikube) =====
+  # tls:
+  # - hosts:
+  #   - collabyouth.local
+  #   - api.collabyouth.local
+  #   secretName: collabyouth-tls
