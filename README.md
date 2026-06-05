@@ -9,10 +9,14 @@
 - [Project Overview](#project-overview)
 - [Key Features](#key-features)
 - [DevOps Infrastructure](#devops-infrastructure)
-- [CI/CD Pipeline](#cicd-pipeline)
-- [Containerization & Orchestration](#containerization--orchestration)
-- [Observability & Monitoring](#observability--monitoring)
+   - [CI/CD Pipeline](#cicd-pipeline)
+   - [Containerization & Orchestration](#containerization--orchestration)
+   - [Observability & Monitoring](#observability--monitoring)
+   - [Infrastructure as Code](#infrastructure-as-code)
+   - [Zero-Downtime Deployment](#zero-downtime-deployment)
 - [Technology Stack](#technology-stack)
+- [System Architecture](#system-architecture)
+- [Security Features](#security-features)
 - [Getting Started](#getting-started)
 - [API Documentation](#api-documentation)
 - [Testing](#testing)
@@ -23,6 +27,9 @@
 ## Project Overview
 
 CollabYouth is an interactive web platform designed for students who want to collaborate on real projects. It enables users to build a profile showcasing their skills, find the right teammates, join collaborative events like hackathons and challenges, and form teams — all in a modern, student-friendly environment.
+
+> **Add a screenshot of your homepage here**
+> `![CollabYouth Homepage](docs/screenshots/homepage.png)`
 
 The platform supports three types of actors:
 
@@ -43,6 +50,9 @@ The platform supports three types of actors:
 - Team formation via invitation system
 - Event discovery and participation
 
+> **Add a screenshot of the student dashboard or profile page here**
+> `![Student Dashboard](docs/screenshots/dashboard.png)`
+
 ### Organizer Features
 - Event creation with full details (type, dates, description, requirements)
 - Participant management and registration tracking
@@ -60,16 +70,19 @@ CollabYouth leverages a complete DevOps pipeline, from code push to live deploym
 
 ### CI/CD Pipeline
 
-The GitHub Actions pipeline automates the entire delivery process across 5 jobs: 
+The GitHub Actions pipeline automates the entire delivery process across 5 jobs:
 
 Push to main
-├── Job 1: Build & Test Backend (Java 21, Maven, JUnit)
-├── Job 2: Build & Test Frontend (Node 20, npm, Jest)
-│
-├── Job 3: Docker Build & Push Backend Image  (needs Job 1)
-├── Job 4: Docker Build & Push Frontend Image (needs Job 2)
-│
-└── Job 5: Deploy to Minikube via self-hosted runner (needs Jobs 3 & 4)
+    ├── Job 1: Build & Test Backend  (Java 21 · Maven · JUnit)
+    ├── Job 2: Build & Test Frontend (Node 20 · npm · Jest)
+    │
+    ├── Job 3: Docker Build & Push Backend Image  (needs Job 1)
+    ├── Job 4: Docker Build & Push Frontend Image (needs Job 2)
+    │
+    └── Job 5: Deploy to Minikube via self-hosted runner (needs Jobs 3 & 4)
+
+> **Add a screenshot of a successful GitHub Actions run here**
+> `![CI/CD Pipeline](docs/screenshots/pipeline.png)`
 
 Key pipeline features:
 - Backend JAR is built once and reused in the Docker build step (no Maven re-run)
@@ -80,11 +93,14 @@ Key pipeline features:
 
 ---
 
-## Containerization & Orchestration
+### Containerization & Orchestration
 
 CollabYouth is fully containerized and deployed on Kubernetes (Minikube).
 
-### Running Pods
+> **Add a screenshot of `kubectl get pods` showing all running pods here**
+> `![Running Pods](docs/screenshots/pods.png)`
+
+#### Running Pods
 
 | Namespace | Service | Description |
 |-----------|---------|-------------|
@@ -95,7 +111,7 @@ CollabYouth is fully containerized and deployed on Kubernetes (Minikube).
 | `monitoring` | `alertmanager` | Alert routing |
 | `ingress-nginx` | `ingress-controller` | HTTP routing |
 
-### Kubernetes Resources
+#### Kubernetes Resources
 
 - **Deployments** — manage application replicas with rolling update strategy
 - **Services** — `LoadBalancer` type for both frontend and backend
@@ -106,7 +122,7 @@ CollabYouth is fully containerized and deployed on Kubernetes (Minikube).
 - **Ingress** — HTTP routing via NGINX Ingress Controller
 - **Resource Limits** — CPU and memory requests/limits on all pods
 
-### Resource Allocation
+#### Resource Allocation
 
 | Service | CPU Request | CPU Limit | Memory Request | Memory Limit |
 |---------|------------|-----------|----------------|--------------|
@@ -115,17 +131,26 @@ CollabYouth is fully containerized and deployed on Kubernetes (Minikube).
 
 ---
 
-## Observability & Monitoring
+### Observability & Monitoring
 
 CollabYouth includes a full monitoring stack using the `kube-prometheus-stack` Helm chart.
 
-### Stack Components
+> **Add a screenshot of Grafana JVM dashboard here**
+> `![Grafana JVM Dashboard](docs/screenshots/grafana-jvm.png)`
+
+> **Add a screenshot of Node Exporter dashboard here**
+> `![Grafana Node Exporter](docs/screenshots/grafana-node.png)`
+
+> **Add a screenshot of the Grafana email alert here**
+> `![Grafana Email Alert](docs/screenshots/grafana-alert.png)`
+
+#### Stack Components
 
 - **Prometheus** — scrapes metrics every 15 seconds from all pods and Kubernetes components
 - **Grafana** — pre-built dashboards for cluster resources, pod metrics, CPU, memory, and network
-- **Alertmanager** — routes alerts via email
+- **Alertmanager** — routes alerts via email notifications
 
-### Configured Alerts
+#### Configured Alerts
 
 | Alert | Condition | Severity |
 |-------|-----------|----------|
@@ -133,9 +158,30 @@ CollabYouth includes a full monitoring stack using the `kube-prometheus-stack` H
 | High CPU | Pod CPU usage exceeds 80% of its limit | Warning |
 | High Memory | Pod memory usage exceeds 80% of its limit | Warning |
 
-### Spring Boot Actuator
+#### Spring Boot Actuator
 
 The backend exposes a `/actuator/prometheus` endpoint scraped by Prometheus via a `ServiceMonitor` resource, enabling JVM and application-level metrics in Grafana.
+
+---
+
+### Infrastructure as Code
+
+The entire infrastructure is defined as code, ensuring reproducibility:
+
+- **Kubernetes manifests** — declarative definition of all deployments, services, secrets, configmaps
+- **GitHub Actions workflow** — pipeline definition as code
+- **Helm chart** — `kube-prometheus-stack` for the monitoring stack
+- **Grafana alerting config** — alert rules defined as a Kubernetes `ConfigMap`
+
+---
+
+### Zero-Downtime Deployment
+
+CollabYouth implements rolling update strategy:
+
+- **Rolling updates** — gradual replacement of pods with zero downtime
+- **Resource limits** — CPU and memory caps prevent resource exhaustion
+- **Stateless design** — both frontend and backend pods are stateless and horizontally scalable
 
 ---
 
@@ -168,6 +214,35 @@ The backend exposes a `/actuator/prometheus` endpoint scraped by Prometheus via 
 | Monitoring | Prometheus + Grafana (kube-prometheus-stack) |
 | Package Manager | Helm v4 |
 | Runner | Self-hosted Windows X64 |
+
+---
+
+## System Architecture
+
+> **Add your architecture diagram image here**
+> `![Architecture Diagram](docs/screenshots/architecture.png)`
+
+The pipeline flows as follows:
+
+1. Developer pushes code to GitHub
+2. GitHub Actions triggers the pipeline automatically
+3. Backend and frontend are built and tested in parallel
+4. Docker images are built and pushed to Docker Hub (tagged `:latest` and `:sha`)
+5. Self-hosted Windows runner applies Kubernetes manifests to Minikube
+6. Pods are restarted to pull the latest images
+7. Prometheus scrapes metrics from all pods every 15 seconds
+8. Grafana visualizes metrics and sends email alerts via Alertmanager
+
+---
+
+## Security Features
+
+- **JWT authentication** — stateless token-based auth for all protected endpoints
+- **BCrypt password hashing** — secure password storage
+- **Role-based access control** — separate roles for Student, Organizer, and Admin
+- **Kubernetes Secrets** — all credentials (DB, JWT, mail) stored as encrypted Kubernetes secrets
+- **CORS configuration** — configured to allow only trusted origins
+- **CSRF disabled** — stateless API with JWT does not require CSRF protection
 
 ---
 
@@ -215,12 +290,12 @@ Frontend runs at `http://localhost:3000`
 minikube start --driver=docker
 
 # 2. Create secrets
-kubectl create secret generic backend-secret \
-  --from-literal=DB_URL="jdbc:postgresql://..." \
-  --from-literal=DB_USERNAME="..." \
-  --from-literal=DB_PASSWORD="..." \
-  --from-literal=JWT_SECRET="..." \
-  --from-literal=MAIL_USERNAME="..." \
+kubectl create secret generic backend-secret `
+  --from-literal=DB_URL="jdbc:postgresql://...host:6543/postgres?prepareThreshold=0" `
+  --from-literal=DB_USERNAME="..." `
+  --from-literal=DB_PASSWORD="..." `
+  --from-literal=JWT_SECRET="..." `
+  --from-literal=MAIL_USERNAME="..." `
   --from-literal=MAIL_PASSWORD="..."
 
 # 3. Apply manifests
@@ -244,7 +319,7 @@ helm install monitoring prometheus-community/kube-prometheus-stack --namespace m
 
 # Access Grafana
 kubectl port-forward -n monitoring service/monitoring-grafana 3001:80
-# Open http://127.0.0.1:3001
+# Open http://127.0.0.1:3001 (username: admin)
 ```
 
 ---
@@ -283,6 +358,8 @@ cd collabyouth_backend
 mvn test -Dtest="!CollabyouthApplicationTests"
 ```
 
+The `CollabyouthApplicationTests` Spring context test is excluded from CI as it requires a live database connection.
+
 ### Frontend (Jest)
 ```bash
 cd collabyouth_frontend
@@ -292,7 +369,7 @@ npm run test:ci
 ---
 
 ## Contributors
-https://github.com/soumiaaaen
-https://github.com/warawafae
+<img width="2752" height="1536" alt="Gemini_Generated_Image_3om37q3om37q3om3 (1)" src="https://github.com/user-attachments/assets/7ff0f5eb-e5a0-411a-bc70-5a7b407f81b8" />
+@soumiaaaen(https://github.com/soumiaaaen) 
+@warawafae(https://github.com/warawafae) 
 
----
