@@ -17,9 +17,14 @@ interface Event {
   id: string;
   title: string;
   type: "HACKATHON" | "CHALLENGE" | "WORKSHOP";
+  eventType: "HACKATHON" | "CHALLENGE" | "WORKSHOP";
   deadline: string;
+  registrationDeadline: string;
   teamSize: number;
+  maxTeamSize: number;
   registeredCount: number;
+  registeredTeams: number;
+  maxTeams: number;
   tags: string[];
 }
 
@@ -72,23 +77,32 @@ export default function StudentDashboard() {
 
   useEffect(() => { fetchAll(); }, []);
 
+  const fetchSafe = async (url: string) => {
+    try {
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) return await res.json();
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
   const fetchAll = async () => {
-    const headers = { Authorization: `Bearer ${token}` };
     const base = process.env.NEXT_PUBLIC_API_URL;
 
-    const [profileRes, eventsRes, invitesRes, statsRes, teamsRes] = await Promise.all([
-      fetch(`${base}/api/student/profile`,             { headers }),
-      fetch(`${base}/api/events?limit=4`,              { headers }),
-      fetch(`${base}/api/student/invitations?limit=3`, { headers }),
-      fetch(`${base}/api/student/stats`,               { headers }),
-      fetch(`${base}/api/students/me/teams`,           { headers }),
+    const [profileData, eventsData, invitesData, statsD, teamsData] = await Promise.all([
+      fetchSafe(`${base}/api/student/profile`),
+      fetchSafe(`${base}/api/events?limit=4`),
+      fetchSafe(`${base}/api/student/invitations?limit=3`),
+      fetchSafe(`${base}/api/student/stats`),
+      fetchSafe(`${base}/api/students/me/teams`),
     ]);
 
-    if (profileRes.ok)  setProfile(await profileRes.json());
-    if (eventsRes.ok)   setEvents(await eventsRes.json());
-    if (invitesRes.ok)  setInvitations(await invitesRes.json());
-    if (statsRes.ok)    setStatsData(await statsRes.json());
-    if (teamsRes.ok)    setTeams(await teamsRes.json());
+    if (profileData) setProfile(profileData);
+    if (eventsData)  setEvents(Array.isArray(eventsData) ? eventsData : eventsData.content ?? []);
+    if (invitesData) setInvitations(Array.isArray(invitesData) ? invitesData : []);
+    if (statsD)      setStatsData(statsD);
+    if (teamsData)   setTeams(Array.isArray(teamsData) ? teamsData : []);
   };
 
   const acceptInvite = async (id: string) => {
@@ -105,20 +119,36 @@ export default function StudentDashboard() {
     setInvitations(prev => prev.filter(i => i.id !== id));
   };
 
-  const fullName  = (p: StudentProfile) => `${p.firstName} ${p.lastName}`.trim();
-  const initials  = (p: StudentProfile) =>
+  const initials = (p: StudentProfile) =>
     `${p.firstName?.[0] ?? ""}${p.lastName?.[0] ?? ""}`.toUpperCase() || "ST";
+
   const nameInitials = (name: string) =>
     name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  // Fix: try multiple possible date fields
+  const getEventDeadline = (ev: Event) => {
+    const raw = ev.deadline || ev.registrationDeadline;
+    if (!raw) return "No deadline";
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return "No deadline";
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  };
+
+  // Fix: try multiple possible type fields
+  const getEventType = (ev: Event) => ev.type || ev.eventType || "HACKATHON";
+
+  // Fix: try multiple possible spots fields
+  const getSpots = (ev: Event) => {
+    const registered = ev.registeredCount ?? ev.registeredTeams ?? 0;
+    const total = ev.teamSize ?? ev.maxTeamSize ?? ev.maxTeams ?? "?";
+    return `${registered}/${total}`;
+  };
 
   const stats = [
-    { label: "Events joined",   value: statsData ? String(statsData.eventsJoined) : "—",  color: "#1D9E75" },
-    { label: "Teams formed",    value: statsData ? String(statsData.teamsFormed) : "—",   color: "#059669" },
-    { label: "Pending invites", value: String(invitations.length),                         color: "#D97706" },
-    { label: "Profile views",   value: statsData ? String(statsData.profileViews) : "—",  color: "#6366F1" },
+    { label: "Events joined",   value: statsData ? String(statsData.eventsJoined) : "—", color: "#1D9E75" },
+    { label: "Teams formed",    value: statsData ? String(statsData.teamsFormed) : "—",  color: "#059669" },
+    { label: "Pending invites", value: String(invitations.length),                        color: "#D97706" },
+    { label: "Profile views",   value: statsData ? String(statsData.profileViews) : "—", color: "#6366F1" },
   ];
 
   return (
@@ -176,19 +206,19 @@ export default function StudentDashboard() {
               ) : events.map(ev => (
                 <div key={ev.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-gray-50 transition-colors">
                   <div className="w-9 h-9 rounded-lg bg-[#F0FAF6] text-[#1D9E75] text-xs font-bold flex items-center justify-center shrink-0">
-                    {ev.type === "HACKATHON" ? "⚡" : ev.type === "CHALLENGE" ? "🏆" : "📚"}
+                    {TYPE_ICONS[getEventType(ev)] || "📅"}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{ev.title}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${TYPE_COLORS[ev.type]}`}>
-                        {ev.type}
+                      <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${TYPE_COLORS[getEventType(ev)] || "bg-gray-50 text-gray-600"}`}>
+                        {getEventType(ev)}
                       </span>
-                      <span className="text-xs text-gray-400">Deadline {formatDate(ev.deadline)}</span>
+                      <span className="text-xs text-gray-400">Deadline {getEventDeadline(ev)}</span>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-xs text-gray-500">{ev.registeredCount}/{ev.teamSize} spots</p>
+                    <p className="text-xs text-gray-500">{getSpots(ev)} spots</p>
                     <Link href={`/student/events/${ev.id}`} className="text-xs text-[#1D9E75] font-medium hover:underline">
                       Join →
                     </Link>
