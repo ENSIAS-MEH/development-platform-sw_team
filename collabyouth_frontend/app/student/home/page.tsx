@@ -33,7 +33,20 @@ interface TeamInvitation {
 interface StudentStats {
   eventsJoined: number;
   teamsFormed: number;
+  pendingInvites: number;
   profileViews: number;
+}
+
+interface TeamContribution {
+  id: string;
+  teamName: string;
+  eventName: string;
+  eventType: "HACKATHON" | "CHALLENGE" | "WORKSHOP";
+  role: "LEADER" | "MEMBER";
+  membersCount: number;
+  maxTeamSize: number;
+  registeredAt: string;
+  eventStatus: "PUBLISHED" | "CLOSED";
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -42,11 +55,18 @@ const TYPE_COLORS: Record<string, string> = {
   WORKSHOP:  "bg-teal-50 text-teal-700",
 };
 
+const TYPE_ICONS: Record<string, string> = {
+  HACKATHON: "⚡",
+  CHALLENGE: "🏆",
+  WORKSHOP: "📚",
+};
+
 export default function StudentDashboard() {
   const [profile, setProfile]         = useState<StudentProfile | null>(null);
   const [events, setEvents]           = useState<Event[]>([]);
   const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
   const [statsData, setStatsData]     = useState<StudentStats | null>(null);
+  const [teams, setTeams]             = useState<TeamContribution[]>([]);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
 
@@ -56,17 +76,19 @@ export default function StudentDashboard() {
     const headers = { Authorization: `Bearer ${token}` };
     const base = process.env.NEXT_PUBLIC_API_URL;
 
-    const [profileRes, eventsRes, invitesRes, statsRes] = await Promise.all([
+    const [profileRes, eventsRes, invitesRes, statsRes, teamsRes] = await Promise.all([
       fetch(`${base}/api/student/profile`,             { headers }),
       fetch(`${base}/api/events?limit=4`,              { headers }),
       fetch(`${base}/api/student/invitations?limit=3`, { headers }),
       fetch(`${base}/api/student/stats`,               { headers }),
+      fetch(`${base}/api/students/me/teams`,           { headers }),
     ]);
 
     if (profileRes.ok)  setProfile(await profileRes.json());
     if (eventsRes.ok)   setEvents(await eventsRes.json());
     if (invitesRes.ok)  setInvitations(await invitesRes.json());
     if (statsRes.ok)    setStatsData(await statsRes.json());
+    if (teamsRes.ok)    setTeams(await teamsRes.json());
   };
 
   const acceptInvite = async (id: string) => {
@@ -225,6 +247,42 @@ export default function StudentDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* My Teams */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+            <p className="text-sm font-semibold text-gray-700">My Teams</p>
+            <Link href="/student/teams" className="text-xs text-[#1D9E75] font-medium hover:underline">See more →</Link>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {teams.length === 0 ? (
+              <div className="text-center py-10">
+                <p className="text-2xl mb-1">👥</p>
+                <p className="text-xs text-gray-400">You haven't joined any teams yet</p>
+              </div>
+            ) : teams.slice(0, 2).map(team => (
+              <div key={team.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-gray-50 transition-colors">
+                <div className="w-9 h-9 rounded-lg bg-[#F0FAF6] text-[#1D9E75] text-xs font-bold flex items-center justify-center shrink-0">
+                  {TYPE_ICONS[team.eventType] || "👥"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{team.teamName}</p>
+                  <p className="text-xs text-gray-400 truncate">{team.eventName}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${
+                    team.role === "LEADER" ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600"
+                  }`}>
+                    {team.role}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {team.membersCount}/{team.maxTeamSize} members
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
