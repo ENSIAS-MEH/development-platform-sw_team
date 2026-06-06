@@ -99,7 +99,7 @@ export default function RegisterPage() {
     <div
       className="relative min-h-screen flex items-center justify-center py-10"
       style={{
-        backgroundImage: "url('/img/collabyouth_logo_v1_fixed.png')",
+        backgroundImage: "url('/Img/collabyouth_logo_v1_fixed.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -115,7 +115,7 @@ export default function RegisterPage() {
         {/* Logo */}
         <div className="flex justify-center mb-6">
           <Image
-            src="/img/collabyouth_logo_v1_fixed.png"
+            src="/Img/collabyouth_logo_v1_fixed.png"
             alt="CollabYouth"
             width={180}
             height={65}

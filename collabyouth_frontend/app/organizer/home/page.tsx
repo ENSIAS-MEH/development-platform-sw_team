@@ -197,7 +197,7 @@ export default function OrganizerHome() {
         <div className="flex justify-between items-center w-full">
           <div className="relative w-80 h-30">
             <Image 
-              src="/img/collabyouth_logo_v1_fixed.png" 
+              src="/Img/collabyouth_logo_v1_fixed.png" 
               alt="Collabyouth Logo"
               fill
               className="object-contain"

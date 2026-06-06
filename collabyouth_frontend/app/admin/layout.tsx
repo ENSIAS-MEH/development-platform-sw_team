@@ -48,7 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ) : (
             /* Expanded: show actual logo image */
             <Image
-              src="/img/collabyouth_logo_v1_fixed.png"
+              src="/Img/collabyouth_logo_v1_fixed.png"
               alt="CollabYouth"
               width={140}
               height={48}

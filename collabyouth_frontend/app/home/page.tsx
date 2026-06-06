@@ -11,7 +11,7 @@ export default function HomePage() {
         {/* NAVBAR transparente sur le vert */}
         <nav className="flex items-center justify-between px-8 py-1">
           <Image
-            src="/img/collabyouth_logo_v1_fixed.png"
+            src="/Img/collabyouth_logo_v1_fixed.png"
             alt="CollabYouth"
             width={350}
             height={380}
@@ -65,7 +65,7 @@ export default function HomePage() {
           {/* Image à droite */}
           <div className="flex- flex justify-center">
             <Image
-              src="/img/image-removebg-preview.png"
+              src="/Img/image-removebg-preview.png"
               alt="CollabYouth Network"
               width={380}
               height={380}
@@ -92,7 +92,7 @@ export default function HomePage() {
           {/* Participation */}
           <div className="flex flex-col items-center text-center p-6 rounded-2xl hover:bg-gray-50 transition-colors">
             <Image
-              src="/img/event_participation_logo.png"
+              src="/Img/event_participation_logo.png"
               alt="Participation"
               width={380}
               height={380}
@@ -111,7 +111,7 @@ export default function HomePage() {
           {/* Hackathon */}
           <div className="flex flex-col items-center text-center p-6 rounded-2xl hover:bg-gray-50 transition-colors">
             <Image
-              src="/img/hackathon_logo.png"
+              src="/Img/hackathon_logo.png"
               alt="Hackathon"
               width={380}
               height={380}
@@ -130,7 +130,7 @@ export default function HomePage() {
           {/* Challenge */}
           <div className="flex flex-col items-center text-center p-6 rounded-2xl hover:bg-gray-50 transition-colors">
             <Image
-              src="/img/challenge_logo.png"
+              src="/Img/challenge_logo.png"
               alt="Challenge"
               width={380}
               height={380}
