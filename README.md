@@ -1,4 +1,4 @@
-# CollabYouth 🤝
+# CollabYouth 
 
 > A modern web platform connecting students with collaborative opportunities — hackathons, challenges, and team formation.
 
@@ -28,8 +28,8 @@
 
 CollabYouth is an interactive web platform designed for students who want to collaborate on real projects. It enables users to build a profile showcasing their skills, find the right teammates, join collaborative events like hackathons and challenges, and form teams — all in a modern, student-friendly environment.
 
-> **Add a screenshot of your homepage here**
-> `![CollabYouth Homepage](docs/screenshots/homepage.png)`
+<img width="1867" height="868" alt="image" src="https://github.com/user-attachments/assets/dc55d3c2-8597-4080-b16b-2533ff40c3cc" />
+
 
 The platform supports three types of actors:
 
@@ -50,8 +50,9 @@ The platform supports three types of actors:
 - Team formation via invitation system
 - Event discovery and participation
 
-> **Add a screenshot of the student dashboard or profile page here**
-> `![Student Dashboard](docs/screenshots/dashboard.png)`
+
+<img width="1912" height="869" alt="image" src="https://github.com/user-attachments/assets/dbe6dff5-925c-4ca2-9026-32d3e5d79e18" />
+
 
 ### Organizer Features
 - Event creation with full details (type, dates, description, requirements)
@@ -72,6 +73,7 @@ CollabYouth leverages a complete DevOps pipeline, from code push to live deploym
 
 The GitHub Actions pipeline automates the entire delivery process across 5 jobs:
 
+```
 Push to main
     ├── Job 1: Build & Test Backend  (Java 21 · Maven · JUnit)
     ├── Job 2: Build & Test Frontend (Node 20 · npm · Jest)
@@ -80,9 +82,10 @@ Push to main
     ├── Job 4: Docker Build & Push Frontend Image (needs Job 2)
     │
     └── Job 5: Deploy to Minikube via self-hosted runner (needs Jobs 3 & 4)
+```
 
-> **Add a screenshot of a successful GitHub Actions run here**
-> `![CI/CD Pipeline](docs/screenshots/pipeline.png)`
+<img width="1366" height="436" alt="image" src="https://github.com/user-attachments/assets/51753b0d-05be-4378-b44c-6aae5de0c28c" />
+
 
 Key pipeline features:
 - Backend JAR is built once and reused in the Docker build step (no Maven re-run)
@@ -97,8 +100,8 @@ Key pipeline features:
 
 CollabYouth is fully containerized and deployed on Kubernetes (Minikube).
 
-> **Add a screenshot of `kubectl get pods` showing all running pods here**
-> `![Running Pods](docs/screenshots/pods.png)`
+<img width="1285" height="462" alt="image" src="https://github.com/user-attachments/assets/dea49302-398a-41e5-ae93-e45681a7da61" />
+
 
 #### Running Pods
 
@@ -135,14 +138,15 @@ CollabYouth is fully containerized and deployed on Kubernetes (Minikube).
 
 CollabYouth includes a full monitoring stack using the `kube-prometheus-stack` Helm chart.
 
-> **Add a screenshot of Grafana JVM dashboard here**
-> `![Grafana JVM Dashboard](docs/screenshots/grafana-jvm.png)`
 
-> **Add a screenshot of Node Exporter dashboard here**
-> `![Grafana Node Exporter](docs/screenshots/grafana-node.png)`
+<img width="1568" height="700" alt="preview (1)" src="https://github.com/user-attachments/assets/11de4ea9-2267-4813-9a88-e72c1af1815c" />
 
-> **Add a screenshot of the Grafana email alert here**
-> `![Grafana Email Alert](docs/screenshots/grafana-alert.png)`
+
+<img width="1568" height="734" alt="preview (2)" src="https://github.com/user-attachments/assets/5a7a0cec-b0ed-4ad1-9f84-ca9a1c708fc3" />
+
+<img width="1568" height="686" alt="preview (3)" src="https://github.com/user-attachments/assets/e1060ed9-6f89-4ec4-b7c7-63231f57652a" />
+
+
 
 #### Stack Components
 
@@ -219,8 +223,8 @@ CollabYouth implements rolling update strategy:
 
 ## System Architecture
 
-> **Add your architecture diagram image here**
-> `![Architecture Diagram](docs/screenshots/architecture.png)`
+<img width="2752" height="1536" alt="Gemini_Generated_Image_3om37q3om37q3om3" src="https://github.com/user-attachments/assets/98f32f4c-fbc5-46ca-8e61-b94741229bb1" />
+
 
 The pipeline flows as follows:
 
@@ -369,7 +373,7 @@ npm run test:ci
 ---
 
 ## Contributors
-<img width="2752" height="1536" alt="Gemini_Generated_Image_3om37q3om37q3om3 (1)" src="https://github.com/user-attachments/assets/7ff0f5eb-e5a0-411a-bc70-5a7b407f81b8" />
+
 @soumiaaaen(https://github.com/soumiaaaen) 
 @warawafae(https://github.com/warawafae) 
 
