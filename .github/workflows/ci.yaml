@@ -76,12 +76,17 @@ jobs:
           cache: 'npm'
           cache-dependency-path: collabyouth_frontend/package-lock.json
 
-      # Step 3: Install dependencies using ci for a clean, reproducible install
+      # Step 3: Clear npm cache to avoid corruption issues
+      - name: Clear npm cache
+        run: npm cache clean --force
+        working-directory: collabyouth_frontend
+
+      # Step 4: Install dependencies using ci for a clean, reproducible install
       - name: Install dependencies
         run: npm ci
         working-directory: collabyouth_frontend
 
-      # Step 4: Run Jest tests with coverage
+      # Step 5: Run Jest tests with coverage
       # NEXT_PUBLIC_API_URL points to localhost in CI (no real backend running)
       - name: Run frontend tests
         run: npm run test:ci
@@ -89,7 +94,7 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8081
 
-      # Step 5: Build the Next.js app to catch any build-time errors
+      # Step 6: Build the Next.js app to catch any build-time errors
       # NEXT_PUBLIC_API_URL is injected at build time — required by Next.js
       - name: Build Next.js app
         run: npm run build
@@ -184,6 +189,7 @@ jobs:
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
   # ─────────────────────────────────────────────────────────────────
   # JOB 5 : Deploy to Minikube (self-hosted runner sur ton PC)
   # Tourne sur TON PC via l'agent GitHub Actions
@@ -221,6 +227,7 @@ jobs:
         run: |
           kubectl rollout status deployment/backend-deployment --timeout=300s
           kubectl rollout status deployment/frontend-deployment --timeout=300s
+
       # Step 6: Afficher l'URL d'accès sans bloquer le pipeline
       - name: Show app URL
         run: |
