@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-// Matches StudentProfileResponse / StudentSummaryResponse from backend
 interface StudentProfile {
   id: string;
   firstName: string;
@@ -31,6 +30,12 @@ interface TeamInvitation {
   sentAt: string;
 }
 
+interface StudentStats {
+  eventsJoined: number;
+  teamsFormed: number;
+  profileViews: number;
+}
+
 const TYPE_COLORS: Record<string, string> = {
   HACKATHON: "bg-violet-50 text-violet-700",
   CHALLENGE: "bg-blue-50 text-blue-700",
@@ -41,7 +46,7 @@ export default function StudentDashboard() {
   const [profile, setProfile]         = useState<StudentProfile | null>(null);
   const [events, setEvents]           = useState<Event[]>([]);
   const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
-  const [partners, setPartners]       = useState<StudentProfile[]>([]);
+  const [statsData, setStatsData]     = useState<StudentStats | null>(null);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
 
@@ -51,17 +56,17 @@ export default function StudentDashboard() {
     const headers = { Authorization: `Bearer ${token}` };
     const base = process.env.NEXT_PUBLIC_API_URL;
 
-    const [profileRes, eventsRes, invitesRes, partnersRes] = await Promise.all([
+    const [profileRes, eventsRes, invitesRes, statsRes] = await Promise.all([
       fetch(`${base}/api/student/profile`,             { headers }),
       fetch(`${base}/api/events?limit=4`,              { headers }),
       fetch(`${base}/api/student/invitations?limit=3`, { headers }),
-      fetch(`${base}/api/students/suggested?limit=4`,  { headers }),
+      fetch(`${base}/api/student/stats`,               { headers }),
     ]);
 
     if (profileRes.ok)  setProfile(await profileRes.json());
     if (eventsRes.ok)   setEvents(await eventsRes.json());
     if (invitesRes.ok)  setInvitations(await invitesRes.json());
-    if (partnersRes.ok) setPartners(await partnersRes.json());
+    if (statsRes.ok)    setStatsData(await statsRes.json());
   };
 
   const acceptInvite = async (id: string) => {
@@ -78,11 +83,9 @@ export default function StudentDashboard() {
     setInvitations(prev => prev.filter(i => i.id !== id));
   };
 
-  // Uses firstName + lastName — no more single `name` field
   const fullName  = (p: StudentProfile) => `${p.firstName} ${p.lastName}`.trim();
   const initials  = (p: StudentProfile) =>
     `${p.firstName?.[0] ?? ""}${p.lastName?.[0] ?? ""}`.toUpperCase() || "ST";
-  // For invitation sender name (still a plain string from the API)
   const nameInitials = (name: string) =>
     name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
@@ -90,10 +93,10 @@ export default function StudentDashboard() {
     new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
   const stats = [
-    { label: "Events joined",   value: "3",  color: "#1D9E75" },
-    { label: "Teams formed",    value: "2",  color: "#059669" },
-    { label: "Pending invites", value: String(invitations.length), color: "#D97706" },
-    { label: "Profile views",   value: "47", color: "#6366F1" },
+    { label: "Events joined",   value: statsData ? String(statsData.eventsJoined) : "—",  color: "#1D9E75" },
+    { label: "Teams formed",    value: statsData ? String(statsData.teamsFormed) : "—",   color: "#059669" },
+    { label: "Pending invites", value: String(invitations.length),                         color: "#D97706" },
+    { label: "Profile views",   value: statsData ? String(statsData.profileViews) : "—",  color: "#6366F1" },
   ];
 
   return (
@@ -173,7 +176,7 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          {/* Team invitations quick */}
+          {/* Team invitations */}
           <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-semibold text-gray-700">
@@ -222,46 +225,6 @@ export default function StudentDashboard() {
                 ))}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Suggested partners */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
-            <p className="text-sm font-semibold text-gray-700">Suggested partners</p>
-            <Link href="/student/partners" className="text-xs text-[#1D9E75] font-medium hover:underline">Find more →</Link>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-gray-100">
-            {partners.length === 0
-              ? Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="p-5 animate-pulse">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 mb-3" />
-                    <div className="h-3 bg-gray-100 rounded w-3/4 mb-2" />
-                    <div className="h-2 bg-gray-100 rounded w-1/2" />
-                  </div>
-                ))
-              : partners.map(p => (
-                  <div key={p.id} className="p-5 hover:bg-gray-50 transition-colors">
-                    <div className="w-10 h-10 rounded-full bg-[#F0FAF6] text-[#1D9E75] text-sm font-bold flex items-center justify-center mb-3">
-                      {initials(p)}
-                    </div>
-                    {/* fullName() replaces the old p.name */}
-                    <p className="text-sm font-semibold text-gray-900">{fullName(p)}</p>
-                    <p className="text-xs text-gray-400 mb-2">{p.domain}</p>
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {p.skills.slice(0, 2).map(sk => (
-                        <span key={sk} className="bg-gray-100 text-gray-600 text-xs px-1.5 py-0.5 rounded-full">{sk}</span>
-                      ))}
-                      {p.skills.length > 2 && (
-                        <span className="bg-gray-100 text-gray-400 text-xs px-1.5 py-0.5 rounded-full">+{p.skills.length - 2}</span>
-                      )}
-                    </div>
-                    <button className="w-full text-xs py-1.5 rounded-lg border border-[#1D9E75] text-[#1D9E75] hover:bg-[#F0FAF6] transition-colors font-medium">
-                      Invite
-                    </button>
-                  </div>
-                ))
-            }
           </div>
         </div>
 
