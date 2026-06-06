@@ -73,6 +73,7 @@ CollabYouth leverages a complete DevOps pipeline, from code push to live deploym
 
 The GitHub Actions pipeline automates the entire delivery process across 5 jobs:
 
+```
 Push to main
     ├── Job 1: Build & Test Backend  (Java 21 · Maven · JUnit)
     ├── Job 2: Build & Test Frontend (Node 20 · npm · Jest)
@@ -81,6 +82,7 @@ Push to main
     ├── Job 4: Docker Build & Push Frontend Image (needs Job 2)
     │
     └── Job 5: Deploy to Minikube via self-hosted runner (needs Jobs 3 & 4)
+```
 
 <img width="1366" height="436" alt="image" src="https://github.com/user-attachments/assets/51753b0d-05be-4378-b44c-6aae5de0c28c" />
 
