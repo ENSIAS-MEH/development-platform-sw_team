@@ -5,14 +5,17 @@ import com.collabyouth.dto.response.TeamContributionResponse;
 import com.collabyouth.dto.response.TeamDetailsResponse;
 import com.collabyouth.entity.Team;
 import com.collabyouth.entity.TeamMember;
+import com.collabyouth.entity.TeamInvitation;
 import com.collabyouth.entity.EventTeam;
 import com.collabyouth.entity.Event;
 import com.collabyouth.entity.User;
 import com.collabyouth.enums.TeamRole;
+import com.collabyouth.enums.InvitationStatus;
 import com.collabyouth.repository.TeamRepository;
 import com.collabyouth.repository.TeamMemberRepository;
 import com.collabyouth.repository.EventTeamRepository;
 import com.collabyouth.repository.UserRepository;
+import com.collabyouth.repository.TeamInvitationRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,99 +47,108 @@ public class EventTeamController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private TeamInvitationRepository teamInvitationRepository;
+
     @PersistenceContext
     private EntityManager entityManager;
 
     @PostMapping("/events/{eventId}/register-team")
-@Transactional
-public ResponseEntity<?> registerTeam(
-        @PathVariable UUID eventId,
-        @RequestBody CreateTeamRequest request,
-        @AuthenticationPrincipal UserDetails userDetails
-) {
-    try {
+    @Transactional
+    public ResponseEntity<?> registerTeam(
+            @PathVariable UUID eventId,
+            @RequestBody CreateTeamRequest request,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        try {
+            if (userDetails == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("{\"error\": \"User not authenticated via JWT.\"}");
+            }
 
-        if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("{\"error\": \"User not authenticated via JWT.\"}");
-        }
+            User currentUser = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("Current user not found"));
 
-        User currentUser = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("Current user not found"));
+            Event eventRef = entityManager.getReference(Event.class, eventId);
 
-        Event eventRef = entityManager.getReference(Event.class, eventId);
-
-        Team team = Team.builder()
-                .name(request.getTeamName())
-                .createdBy(currentUser)
-                .createdAt(OffsetDateTime.now())
-                .updatedAt(OffsetDateTime.now())
-                .build();
-
-        Team savedTeam = teamRepository.save(team);
-
-        EventTeam eventTeam = EventTeam.builder()
-                .event(eventRef)
-                .team(savedTeam)
-                .registeredAt(OffsetDateTime.now())
-                .build();
-
-        eventTeamRepository.save(eventTeam);
-
-        // ✅ LEADER CHECK SAFE
-        if (!teamMemberRepository.existsByTeamIdAndUserId(savedTeam.getId(), currentUser.getId())) {
-
-            TeamMember leader = TeamMember.builder()
-                    .team(savedTeam)
-                    .user(currentUser)
-                    .teamRole(TeamRole.ADMIN)
-                    .joinedAt(OffsetDateTime.now())
+            Team team = Team.builder()
+                    .name(request.getTeamName())
+                    .createdBy(currentUser)
+                    .createdAt(OffsetDateTime.now())
+                    .updatedAt(OffsetDateTime.now())
                     .build();
 
-            teamMemberRepository.save(leader);
-        }
+            Team savedTeam = teamRepository.save(team);
 
-        // ✅ MEMBERS
-        if (request.getMembers() != null) {
-            for (String rawMemberId : request.getMembers()) {
+            EventTeam eventTeam = EventTeam.builder()
+                    .event(eventRef)
+                    .team(savedTeam)
+                    .registeredAt(OffsetDateTime.now())
+                    .build();
 
-                if (rawMemberId == null || rawMemberId.trim().isEmpty()) {
-                    continue;
-                }
+            eventTeamRepository.save(eventTeam);
 
-                try {
-                    UUID memberUuid = UUID.fromString(rawMemberId.trim());
+            // ✅ LEADER
+            if (!teamMemberRepository.existsByTeamIdAndUserId(savedTeam.getId(), currentUser.getId())) {
+                TeamMember leader = TeamMember.builder()
+                        .team(savedTeam)
+                        .user(currentUser)
+                        .teamRole(TeamRole.ADMIN)
+                        .joinedAt(OffsetDateTime.now())
+                        .build();
+                teamMemberRepository.save(leader);
+            }
 
-                    // ❌ empêche doublon réel DB
-                    if (!teamMemberRepository.existsByTeamIdAndUserId(savedTeam.getId(), memberUuid)) {
+            // ✅ MEMBERS — send invitations instead of adding directly
+            if (request.getMembers() != null) {
+                for (String rawMemberId : request.getMembers()) {
 
-                        User memberUserRef = userRepository.findById(memberUuid)
-                                .orElseThrow(() -> new RuntimeException("User not found: " + memberUuid));
-
-                        TeamMember member = TeamMember.builder()
-                                .team(savedTeam)
-                                .user(memberUserRef)
-                                .teamRole(TeamRole.MEMBER)
-                                .joinedAt(OffsetDateTime.now())
-                                .build();
-
-                        teamMemberRepository.save(member);
+                    if (rawMemberId == null || rawMemberId.trim().isEmpty()) {
+                        continue;
                     }
 
-                } catch (IllegalArgumentException e) {
-                    System.err.println("[SKIP] Invalid UUID ignored: " + rawMemberId);
+                    try {
+                        UUID memberUuid = UUID.fromString(rawMemberId.trim());
+
+                        // Skip if already a member
+                        if (teamMemberRepository.existsByTeamIdAndUserId(savedTeam.getId(), memberUuid)) {
+                            continue;
+                        }
+
+                        // Skip if already has a pending invitation
+                        if (teamInvitationRepository.existsByTeamIdAndInvitedUserIdAndStatus(
+                                savedTeam.getId(), memberUuid, InvitationStatus.PENDING)) {
+                            continue;
+                        }
+
+                        User invitedUser = userRepository.findById(memberUuid)
+                                .orElseThrow(() -> new RuntimeException("User not found: " + memberUuid));
+
+                        TeamInvitation invitation = TeamInvitation.builder()
+                                .team(savedTeam)
+                                .invitedUser(invitedUser)
+                                .invitedBy(currentUser)
+                                .message("You have been invited to join team: " + savedTeam.getName())
+                                .status(InvitationStatus.PENDING)
+                                .build();
+
+                        teamInvitationRepository.save(invitation);
+
+                    } catch (IllegalArgumentException e) {
+                        System.err.println("[SKIP] Invalid UUID ignored: " + rawMemberId);
+                    }
                 }
             }
+
+            return ResponseEntity.ok()
+                    .body("{\"message\": \"Team successfully created and linked to the event!\"}");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"" + e.getMessage() + "\"}");
         }
-
-        return ResponseEntity.ok()
-                .body("{\"message\": \"Team successfully created and linked to the event!\"}");
-
-    } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("{\"error\": \"" + e.getMessage() + "\"}");
     }
-}
+
     /**
      * GET /api/students/me/teams
      */
@@ -165,7 +177,7 @@ public ResponseEntity<?> registerTeam(
                         .teamName(team.getName())
                         .eventName(event != null ? event.getTitle() : "Unknown Event")
                         .eventType(event != null ? event.getEventType().name() : "HACKATHON")
-                        .role(userRole.equals("ADMIN") ? "LEADER" : "MEMBER") 
+                        .role(userRole.equals("ADMIN") ? "LEADER" : "MEMBER")
                         .membersCount(countMembers)
                         .maxTeamSize(event != null ? event.getMaxTeamSize() : 5)
                         .registeredAt(team.getCreatedAt().toString())
@@ -219,9 +231,9 @@ public ResponseEntity<?> registerTeam(
                         .endsAt(event.getEndsAt().toString())
                         .minTeamSize(event.getMinTeamSize())
                         .maxTeamSize(event.getMaxTeamSize())
-                        .prizeFirst(event.getPrizeFirst())   
-                        .prizeSecond(event.getPrizeSecond()) 
-                        .prizeThird(event.getPrizeThird())   
+                        .prizeFirst(event.getPrizeFirst())
+                        .prizeSecond(event.getPrizeSecond())
+                        .prizeThird(event.getPrizeThird())
                         .build();
             }
 
