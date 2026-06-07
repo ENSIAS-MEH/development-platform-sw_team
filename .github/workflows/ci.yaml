@@ -12,11 +12,37 @@ env:
 jobs:
 
   # ─────────────────────────────────────────────────────────────────
+  # JOB 0 : Cleanup old artifacts to free storage
+  # ─────────────────────────────────────────────────────────────────
+  cleanup-artifacts:
+    name: Cleanup Old Artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+            for (const artifact of artifacts.data.artifacts) {
+              await github.rest.actions.deleteArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id,
+              });
+              console.log(`Deleted artifact: ${artifact.name}`);
+            }
+
+  # ─────────────────────────────────────────────────────────────────
   # JOB 1 : Build & Test Backend (Spring Boot)
   # ─────────────────────────────────────────────────────────────────
   build-and-test-backend:
     name: Build & Test Backend
     runs-on: ubuntu-latest
+    needs: cleanup-artifacts
 
     steps:
       # Step 1: Download the code from GitHub
@@ -55,6 +81,7 @@ jobs:
         with:
           name: collabyouth-jar
           path: collabyouth_backend/target/*.jar
+          retention-days: 1
 
   # ─────────────────────────────────────────────────────────────────
   # JOB 2 : Build & Test Frontend (Next.js + Jest)
@@ -62,6 +89,7 @@ jobs:
   build-and-test-frontend:
     name: Build & Test Frontend
     runs-on: ubuntu-latest
+    needs: cleanup-artifacts
 
     steps:
       # Step 1: Download the code from GitHub
