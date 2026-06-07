@@ -71,24 +71,34 @@ export default function StudentDashboard() {
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
-    const token = localStorage.getItem("token");
-    const headers = { Authorization: `Bearer ${token}` };
-    const base = process.env.NEXT_PUBLIC_API_URL;
+  const token = localStorage.getItem("token");
+  const headers = { Authorization: `Bearer ${token}` };
+  const base = process.env.NEXT_PUBLIC_API_URL;
 
-    const [profileRes, eventsRes, invitesRes, statsRes, teamsRes] = await Promise.all([
-      fetch(`${base}/api/student/profile`,             { headers }),
-      fetch(`${base}/api/events?limit=4`,              { headers }),
-      fetch(`${base}/api/student/invitations?limit=3`, { headers }),
-      fetch(`${base}/api/student/stats`,               { headers }),
-      fetch(`${base}/api/students/me/teams`,           { headers }),
-    ]);
-
-    if (profileRes.ok)  setProfile(await profileRes.json());
-    if (eventsRes.ok)   setEvents(await eventsRes.json());
-    if (invitesRes.ok)  setInvitations(await invitesRes.json());
-    if (statsRes.ok)    setStatsData(await statsRes.json());
-    if (teamsRes.ok)    setTeams(await teamsRes.json());
+  const safeFetch = async (url: string) => {
+    try {
+      const res = await fetch(url, { headers });
+      if (res.ok) return res.json();
+      return null;
+    } catch {
+      return null;
+    }
   };
+
+  const [profileData, eventsData, invitesData, statsData, teamsData] = await Promise.all([
+    safeFetch(`${base}/api/student/profile`),
+    safeFetch(`${base}/api/events?limit=4`),
+    safeFetch(`${base}/api/student/invitations?limit=3`),
+    safeFetch(`${base}/api/student/stats`),
+    safeFetch(`${base}/api/students/me/teams`),
+  ]);
+
+  if (profileData) setProfile(profileData);
+  if (eventsData)  setEvents(eventsData);
+  if (invitesData) setInvitations(invitesData);
+  if (statsData)   setStatsData(statsData);
+  if (teamsData)   setTeams(teamsData);
+};
 
   const acceptInvite = async (id: string) => {
     const token = localStorage.getItem("token");
