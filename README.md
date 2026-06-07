@@ -240,7 +240,9 @@ The pipeline flows as follows:
 
 ---
 ## Platform Use Cases
+
 ![Use Cases](collabyouth_frontend/public/Img/use cases.png)
+
 ---
 ## Security Features
 
