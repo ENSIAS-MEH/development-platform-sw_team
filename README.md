@@ -16,6 +16,7 @@
    - [Zero-Downtime Deployment](#zero-downtime-deployment)
 - [Technology Stack](#technology-stack)
 - [System Architecture](#system-architecture)
+- [Platform Use Cases](#platform-use-cases)
 - [Security Features](#security-features)
 - [Getting Started](#getting-started)
 - [API Documentation](#api-documentation)
@@ -238,7 +239,9 @@ The pipeline flows as follows:
 8. Grafana visualizes metrics and sends email alerts via Alertmanager
 
 ---
-
+## Platform Use Cases
+![Use Cases](collabyouth_frontend/public/Img/use cases.png)
+---
 ## Security Features
 
 - **JWT authentication** — stateless token-based auth for all protected endpoints
