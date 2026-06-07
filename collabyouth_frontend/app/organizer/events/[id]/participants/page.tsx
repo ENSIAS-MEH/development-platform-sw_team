@@ -3,13 +3,19 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
+interface TeamMemberInfo {
+  userId: string;
+  fullName: string;
+  role: string;
+}
+
 interface ParticipantTeam {
   teamId: string;
   teamName: string;
   description: string;
-  createdBy: string;
+  leaderName: string;
   registeredAt: string;
-  membersCount?: number;
+  members: TeamMemberInfo[];
 }
 
 export default function EventParticipantsPage() {
@@ -19,6 +25,7 @@ export default function EventParticipantsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState<ParticipantTeam | null>(null);
 
   useEffect(() => {
     const fetchParticipants = async () => {
@@ -41,7 +48,7 @@ export default function EventParticipantsPage() {
 
   const filtered = teams.filter(t =>
     t.teamName.toLowerCase().includes(search.toLowerCase()) ||
-    (t.createdBy || "").toLowerCase().includes(search.toLowerCase())
+    (t.leaderName || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const formatDate = (iso: string) => {
@@ -55,6 +62,62 @@ export default function EventParticipantsPage() {
 
   return (
     <div className="w-full min-h-screen bg-gray-50 flex flex-col">
+
+      {/* Members Modal */}
+      {selectedTeam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            {/* Modal header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900">{selectedTeam.teamName}</h2>
+                <p className="text-xs text-gray-400 mt-0.5">{selectedTeam.members.length} member{selectedTeam.members.length !== 1 ? "s" : ""}</p>
+              </div>
+              <button
+                onClick={() => setSelectedTeam(null)}
+                className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+              >
+                <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Members list */}
+            <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
+              {selectedTeam.members.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-xs text-gray-400">No members found</p>
+                </div>
+              ) : selectedTeam.members.map((member) => (
+                <div key={member.userId} className="px-6 py-3 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#F0FAF6] text-[#1D9E75] text-xs font-bold flex items-center justify-center shrink-0">
+                    {getInitials(member.fullName)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{member.fullName}</p>
+                  </div>
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${
+                    member.role === "LEADER" ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600"
+                  }`}>
+                    {member.role}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Modal footer */}
+            <div className="px-6 py-3 bg-gray-50 border-t border-gray-100">
+              <button
+                onClick={() => setSelectedTeam(null)}
+                className="w-full text-xs py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors font-medium"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-8 shrink-0">
@@ -128,14 +191,12 @@ export default function EventParticipantsPage() {
               </div>
               <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
                 <p className="text-2xl font-bold text-blue-600">
-                  {teams.filter(t => t.membersCount && t.membersCount > 0).length || teams.length}
+                  {teams.filter(t => t.members.length > 0).length || teams.length}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">Active Teams</p>
               </div>
               <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-                <p className="text-2xl font-bold text-violet-600">
-                  {filtered.length}
-                </p>
+                <p className="text-2xl font-bold text-violet-600">{filtered.length}</p>
                 <p className="text-xs text-gray-500 mt-1">Showing</p>
               </div>
             </div>
@@ -150,9 +211,10 @@ export default function EventParticipantsPage() {
                 {/* Table header */}
                 <div className="grid grid-cols-12 px-5 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   <div className="col-span-1">#</div>
-                  <div className="col-span-4">Team</div>
-                  <div className="col-span-4">Description</div>
+                  <div className="col-span-3">Team</div>
+                  <div className="col-span-3">Description</div>
                   <div className="col-span-2">Leader</div>
+                  <div className="col-span-2">Members</div>
                   <div className="col-span-1">Registered</div>
                 </div>
 
@@ -169,7 +231,7 @@ export default function EventParticipantsPage() {
                       </div>
 
                       {/* Team name */}
-                      <div className="col-span-4 flex items-center gap-3">
+                      <div className="col-span-3 flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-[#F0FAF6] text-[#1D9E75] text-xs font-bold flex items-center justify-center shrink-0">
                           {getInitials(team.teamName)}
                         </div>
@@ -177,7 +239,7 @@ export default function EventParticipantsPage() {
                       </div>
 
                       {/* Description */}
-                      <div className="col-span-4">
+                      <div className="col-span-3">
                         <p className="text-xs text-gray-500 truncate">
                           {team.description || "No description provided"}
                         </p>
@@ -186,11 +248,24 @@ export default function EventParticipantsPage() {
                       {/* Leader */}
                       <div className="col-span-2">
                         <div className="flex items-center gap-1.5">
-                          <div className="w-5 h-5 rounded-full bg-gray-100 text-gray-600 text-[9px] font-bold flex items-center justify-center shrink-0">
-                            {team.createdBy ? getInitials(team.createdBy) : "?"}
+                          <div className="w-5 h-5 rounded-full bg-[#F0FAF6] text-[#1D9E75] text-[9px] font-bold flex items-center justify-center shrink-0">
+                            {team.leaderName ? getInitials(team.leaderName) : "?"}
                           </div>
-                          <p className="text-xs text-gray-600 truncate">{team.createdBy || "—"}</p>
+                          <p className="text-xs text-gray-600 truncate">{team.leaderName || "—"}</p>
                         </div>
+                      </div>
+
+                      {/* Members button */}
+                      <div className="col-span-2">
+                        <button
+                          onClick={() => setSelectedTeam(team)}
+                          className="flex items-center gap-1.5 text-xs text-[#1D9E75] font-medium hover:underline"
+                        >
+                          <span className="w-5 h-5 rounded-full bg-[#F0FAF6] text-[#1D9E75] text-[9px] font-bold flex items-center justify-center">
+                            {team.members.length}
+                          </span>
+                          View members
+                        </button>
                       </div>
 
                       {/* Date */}
