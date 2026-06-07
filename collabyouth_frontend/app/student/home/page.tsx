@@ -68,11 +68,10 @@ export default function StudentDashboard() {
   const [statsData, setStatsData]     = useState<StudentStats | null>(null);
   const [teams, setTeams]             = useState<TeamContribution[]>([]);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
-
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
+    const token = localStorage.getItem("token");
     const headers = { Authorization: `Bearer ${token}` };
     const base = process.env.NEXT_PUBLIC_API_URL;
 
@@ -92,6 +91,7 @@ export default function StudentDashboard() {
   };
 
   const acceptInvite = async (id: string) => {
+    const token = localStorage.getItem("token");
     await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/student/invitations/${id}/accept`, {
       method: "POST", headers: { Authorization: `Bearer ${token}` },
     });
@@ -99,6 +99,7 @@ export default function StudentDashboard() {
   };
 
   const declineInvite = async (id: string) => {
+    const token = localStorage.getItem("token");
     await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/student/invitations/${id}/decline`, {
       method: "POST", headers: { Authorization: `Bearer ${token}` },
     });
