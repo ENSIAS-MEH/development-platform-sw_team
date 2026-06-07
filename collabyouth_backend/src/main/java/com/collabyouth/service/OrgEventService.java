@@ -7,10 +7,13 @@ import com.collabyouth.dto.response.EventSummaryResponse;
 import com.collabyouth.dto.response.OrgDashboardStats;
 import com.collabyouth.entity.Event;
 import com.collabyouth.entity.Organization;
+import com.collabyouth.entity.Team;
+import com.collabyouth.entity.User;
 import com.collabyouth.enums.EventStatus;
 import com.collabyouth.repository.EventRepository;
 import com.collabyouth.repository.EventTeamRepository;
 import com.collabyouth.repository.OrganizationRepository;
+import com.collabyouth.repository.TeamMemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +27,16 @@ public class OrgEventService {
     private final EventRepository eventRepository;
     private final EventTeamRepository eventTeamRepository;
     private final OrganizationRepository organizationRepository;
+    private final TeamMemberRepository teamMemberRepository;
 
     public OrgEventService(EventRepository eventRepository,
                            EventTeamRepository eventTeamRepository,
-                           OrganizationRepository organizationRepository) {
+                           OrganizationRepository organizationRepository,
+                           TeamMemberRepository teamMemberRepository) {
         this.eventRepository = eventRepository;
         this.eventTeamRepository = eventTeamRepository;
         this.organizationRepository = organizationRepository;
+        this.teamMemberRepository = teamMemberRepository;
     }
 
     public List<EventSummaryResponse> getOrgEvents(UUID orgId) {
@@ -131,6 +137,7 @@ public class OrgEventService {
         return toSummary(updated, countTeams);
     }
 
+    @Transactional
     public List<EventParticipantTeamResponse> getEventParticipants(UUID orgId, UUID eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Événement introuvable"));
@@ -140,13 +147,29 @@ public class OrgEventService {
         }
 
         return eventTeamRepository.findAllByEventId(eventId).stream()
-                .map(et -> new EventParticipantTeamResponse(
-                        et.getTeam().getId(),
-                        et.getTeam().getName(),
-                        et.getTeam().getDescription(),
-                        et.getTeam().getCreatedBy().getId(),
-                        et.getRegisteredAt()
-                ))
+                .map(et -> {
+                    Team team = et.getTeam();
+                    User leader = team.getCreatedBy();
+                    String leaderName = leader.getFirstName() + " " + leader.getLastName();
+
+                    List<EventParticipantTeamResponse.TeamMemberInfo> members =
+                        teamMemberRepository.findAllByTeamId(team.getId()).stream()
+                            .map(tm -> new EventParticipantTeamResponse.TeamMemberInfo(
+                                tm.getUser().getId(),
+                                tm.getUser().getFirstName() + " " + tm.getUser().getLastName(),
+                                tm.getTeamRole().name()
+                            ))
+                            .toList();
+
+                    return new EventParticipantTeamResponse(
+                            team.getId(),
+                            team.getName(),
+                            team.getDescription(),
+                            leaderName,
+                            et.getRegisteredAt(),
+                            members
+                    );
+                })
                 .toList();
     }
 
@@ -159,7 +182,7 @@ public class OrgEventService {
             throw new IllegalStateException("Vous n'êtes pas autorisé à clôturer cet événement");
         }
 
-        event.setEventStatus(EventStatus.CLOSED); 
+        event.setEventStatus(EventStatus.CLOSED);
 
         Event saved = eventRepository.save(event);
         long countTeams = eventTeamRepository.countByEventId(saved.getId());
