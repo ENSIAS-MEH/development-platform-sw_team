@@ -101,7 +101,9 @@ Key pipeline features:
 
 CollabYouth is fully containerized and deployed on Kubernetes (Minikube).
 
-<img width="1285" height="462" alt="image" src="https://github.com/user-attachments/assets/dea49302-398a-41e5-ae93-e45681a7da61" />
+<img width="819" height="81" alt="image" src="https://github.com/user-attachments/assets/6bd58437-c029-4fd4-83d5-7eae885ebe0d" />
+<img width="1110" height="165" alt="image" src="https://github.com/user-attachments/assets/5e7b61ef-d245-4187-812f-df5a3ff984f5" />
+
 
 
 #### Running Pods
