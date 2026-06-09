@@ -223,7 +223,8 @@ CollabYouth implements rolling update strategy:
 
 ## System Architecture
 
-<img width="2752" height="1536" alt="Gemini_Generated_Image_3om37q3om37q3om3" src="https://github.com/user-attachments/assets/98f32f4c-fbc5-46ca-8e61-b94741229bb1" />
+<img width="2528" height="1684" alt="Gemini_Generated_Image_jf6hu0jf6hu0jf6h" src="https://github.com/user-attachments/assets/bca69765-ffac-491c-9c8c-05de31916d1e" />
+
 
 
 The pipeline flows as follows:
