@@ -113,7 +113,6 @@ CollabYouth is fully containerized and deployed on Kubernetes (Minikube).
 | `monitoring` | `prometheus` | Metrics collection |
 | `monitoring` | `grafana` | Metrics visualization |
 | `monitoring` | `alertmanager` | Alert routing |
-| `ingress-nginx` | `ingress-controller` | HTTP routing |
 
 #### Kubernetes Resources
 
@@ -122,8 +121,6 @@ CollabYouth is fully containerized and deployed on Kubernetes (Minikube).
 - **Secrets** — all sensitive credentials (DB, JWT, mail) stored as Kubernetes secrets
 - **ConfigMaps** — Grafana alerting configuration
 - **ServiceMonitor** — Prometheus scraping configuration for the backend
-- **HPA** — Horizontal Pod Autoscaler for automatic scaling
-- **Ingress** — HTTP routing via NGINX Ingress Controller
 - **Resource Limits** — CPU and memory requests/limits on all pods
 
 #### Resource Allocation
