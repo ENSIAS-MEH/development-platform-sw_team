@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+
+  backend:
+    build: ./collabyouth_backend
+    container_name: collabyouth_backend
+    ports:
+      - "8081:8081"
+    env_file:
+      - .env
+  frontend:
+    build: ./collabyouth_frontend
+    container_name: collabyouth_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8081   ✅ nom du service Docker
+  # frontend:
+  #   build: ./collabyouth_frontend
+  #   container_name: collabyouth_frontend
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - backend
